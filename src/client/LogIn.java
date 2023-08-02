@@ -6,9 +6,12 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.*;
 import java.net.Socket;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 
 public class LogIn {
-    JFrame frame;
+    private JFrame frame = new JFrame();
     private JPanel panel;
     private JTextField loginTextField;
     private JPasswordField passwordField;
@@ -16,6 +19,9 @@ public class LogIn {
 
     public LogIn() {
         logInButton.addActionListener(a -> {
+            String login = loginTextField.getText();
+            String password = hashPassword(Arrays.toString(passwordField.getPassword()));
+
             try(Socket socket = new Socket(
                     PropertiesUtil.getProperty("socket.ip"),
                     Integer.parseInt(PropertiesUtil.getProperty("socket.port")));
@@ -30,29 +36,31 @@ public class LogIn {
                 writer.newLine();
                 writer.flush();
 
-                writer.write(loginTextField.getText());
+                writer.write(login);
                 writer.newLine();
                 writer.flush();
 
-                writer.write(passwordField.getPassword());
+                writer.write(password);
                 writer.newLine();
                 writer.flush();
 
                 String answer = reader.readLine();
                 if (answer.equals("AdminSuccess")) {
-                    //admin rights
+                    new Chat(socket, login).openFrame();
+                    frame.dispose();
                 } else if (answer.equals("Success")) {
-                    //common user
+                    new Chat(socket, login);
+                    frame.dispose();
                 } else {
                     JOptionPane.showMessageDialog(null, "Wrong login or password!", "No such user!!!", JOptionPane.ERROR_MESSAGE);
                 }
-
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         });
     }
-    public void openFrame() {
+
+    private void openFrame() {
         frame = new JFrame("YurChat");
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setVisible(true);
@@ -62,7 +70,25 @@ public class LogIn {
         frame.setBounds(toolkit.getScreenSize().width / 2 - 325, toolkit.getScreenSize().height / 2 - 200, 550, 300);
     }
 
+    private static String hashPassword(String password) {
+        try {
+            MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+
+            byte[] hashedBytes = messageDigest.digest(password.getBytes());
+
+            StringBuilder stringBuilder = new StringBuilder();
+            for (byte b : hashedBytes) {
+                stringBuilder.append(String.format("%02x", b));
+            }
+
+            return stringBuilder.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static void main(String[] args) {
-        new LogIn().openFrame();
+        LogIn logIn = new LogIn();
+        logIn.openFrame();
     }
 }

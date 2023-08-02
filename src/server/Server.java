@@ -8,10 +8,13 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class Server {
+    private static final List<Socket> clients = new ArrayList<>();
 
     public static void main(String[] args) {
         try(ExecutorService executorService = Executors.newFixedThreadPool(10);
@@ -20,6 +23,7 @@ public class Server {
 
             while (true) {
                 Socket socket = serverSocket.accept();
+                clients.add(socket);
                 executorService.execute(() -> handleClient(socket));
             }
 
@@ -37,11 +41,18 @@ public class Server {
                              socket.getInputStream()))) {
 
             String command = "";
-            while(!command.equals("exit")) {
-                command = reader.readLine();
+            while(!command.equals("Exit")) {
+                if (reader.ready()) {
+                    command = reader.readLine();
 
-                switch (command) {
-                    case "LogIn" -> logIn(writer, reader);
+                    switch (command) {
+                        case "LogIn" -> logIn(writer, reader);
+                        case "SendMsg" -> sendMsg(reader);
+                        case "Exit" -> {
+                            clients.remove(socket);
+                            socket.close();
+                        }
+                    }
                 }
             }
         } catch (IOException e) {
@@ -83,6 +94,22 @@ public class Server {
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private static void sendMsg(BufferedReader reader) throws IOException{
+        StringBuilder message = new StringBuilder();
+        message.append(reader.readLine());
+        message.append(reader.readLine());
+
+        for(Socket client : clients) {
+            try(BufferedWriter writer = new BufferedWriter(
+                    new OutputStreamWriter(
+                            client.getOutputStream()))) {
+                writer.write(message.toString());
+                writer.newLine();
+                writer.flush();
+            }
         }
     }
 }
