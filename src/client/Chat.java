@@ -1,5 +1,7 @@
 package client;
 
+import utils.SocketManager;
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
@@ -11,11 +13,9 @@ public class Chat{
     private JTextField messageTextField;
     private JButton sendButton;
     private JTextArea chatTextArea;
-    private final Socket socket;
     private final String login;
 
-    public Chat(Socket socket, String login) {
-        this.socket = socket;
+    public Chat(String login) {
         this.login = login;
 
         Thread thread = new Thread(new ReceiveMessage());
@@ -27,18 +27,9 @@ public class Chat{
                 if (JOptionPane.showConfirmDialog(frame, "Are you sure you want to quit?", "Quit?",
                         JOptionPane.YES_NO_OPTION,
                         JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION){
-
-                    try(BufferedWriter writer = new BufferedWriter(
-                            new OutputStreamWriter(
-                                    socket.getOutputStream()));) {
-                        writer.write("Exit");
-                        writer.newLine();
-                        writer.flush();
-                        socket.close();
-                        System.exit(0);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+                    SocketManager.writeMsg("Exit");
+                    SocketManager.close();
+                    System.exit(0);
                 }
             }
         });
@@ -57,42 +48,18 @@ public class Chat{
     }
 
     private void sendMessage() {
-        try (BufferedWriter writer = new BufferedWriter(
-                new OutputStreamWriter(
-                        socket.getOutputStream()))) {
-
-            writer.write("SendMsg");
-            writer.newLine();
-            writer.flush();
-
-            writer.write(login);
-            writer.newLine();
-            writer.flush();
-
-            writer.write(messageTextField.getText());
-            writer.newLine();
-            writer.flush();
-
-            messageTextField.setText("");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        SocketManager.writeMsg("SendMsg");
+        String message = login + ":\t" + messageTextField.getText();
+        SocketManager.writeMsg(message);//exception
+        messageTextField.setText("");
     }
 
     private class ReceiveMessage implements Runnable {
         @Override
         public void run() {
             while(true) {
-                try(BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(
-                                socket.getInputStream()))) {
-                    if(reader.ready()) {
-                        String msg = reader.readLine();
-                        chatTextArea.append(msg);
-                    }
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                String msg = SocketManager.readMsg();
+                chatTextArea.append(msg);
             }
         }
     }

@@ -49,6 +49,7 @@
             </constraints>
             <properties>
               <editable value="false"/>
+              <font size="20"/>
             </properties>
           </component>
         </children>

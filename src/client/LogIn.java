@@ -1,6 +1,7 @@
 package client;
 
 import utils.PropertiesUtil;
+import utils.SocketManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,40 +23,21 @@ public class LogIn {
             String login = loginTextField.getText();
             String password = hashPassword(Arrays.toString(passwordField.getPassword()));
 
-            try(Socket socket = new Socket(
-                    PropertiesUtil.getProperty("socket.ip"),
-                    Integer.parseInt(PropertiesUtil.getProperty("socket.port")));
-                BufferedWriter writer = new BufferedWriter(
-                        new OutputStreamWriter(
-                                socket.getOutputStream()));
-                BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(
-                                socket.getInputStream()))) {
+            SocketManager.writeMsg("LogIn");
 
-                writer.write("LogIn");
-                writer.newLine();
-                writer.flush();
+            SocketManager.writeMsg(login);
 
-                writer.write(login);
-                writer.newLine();
-                writer.flush();
+            SocketManager.writeMsg(password);
 
-                writer.write(password);
-                writer.newLine();
-                writer.flush();
-
-                String answer = reader.readLine();
-                if (answer.equals("AdminSuccess")) {
-                    new Chat(socket, login).openFrame();
-                    frame.dispose();
-                } else if (answer.equals("Success")) {
-                    new Chat(socket, login);
-                    frame.dispose();
-                } else {
-                    JOptionPane.showMessageDialog(null, "Wrong login or password!", "No such user!!!", JOptionPane.ERROR_MESSAGE);
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            String answer = SocketManager.readMsg();
+            if (answer.equals("AdminSuccess")) {
+                new Chat(login).openFrame();
+                frame.dispose();
+            } else if (answer.equals("Success")) {
+                new Chat(login);
+                frame.dispose();
+            } else {
+                JOptionPane.showMessageDialog(null, "Wrong login or password!", "No such user!!!", JOptionPane.ERROR_MESSAGE);
             }
         });
     }

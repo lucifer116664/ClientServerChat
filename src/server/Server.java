@@ -98,15 +98,13 @@ public class Server {
     }
 
     private static void sendMsg(BufferedReader reader) throws IOException{
-        StringBuilder message = new StringBuilder();
-        message.append(reader.readLine());
-        message.append(reader.readLine());
+        String message = reader.readLine();
 
         for(Socket client : clients) {
             try(BufferedWriter writer = new BufferedWriter(
                     new OutputStreamWriter(
                             client.getOutputStream()))) {
-                writer.write(message.toString());
+                writer.write(message);
                 writer.newLine();
                 writer.flush();
             }
