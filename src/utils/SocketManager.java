@@ -42,6 +42,14 @@ public final class SocketManager {
         }
     }
 
+    public static boolean isReaderReady() {
+        try {
+            return reader.ready();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static void close() {
         try {
             writer.close();

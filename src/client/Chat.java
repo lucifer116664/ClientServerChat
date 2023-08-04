@@ -4,8 +4,7 @@ import utils.SocketManager;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.*;
-import java.net.Socket;
+import java.awt.event.WindowAdapter;
 
 public class Chat{
     private JFrame frame = new JFrame();
@@ -14,52 +13,59 @@ public class Chat{
     private JButton sendButton;
     private JTextArea chatTextArea;
     private final String login;
+    private boolean runMessageReceiver;
 
     public Chat(String login) {
         this.login = login;
 
-        Thread thread = new Thread(new ReceiveMessage());
-        thread.start();
-
-        frame.addWindowListener(new java.awt.event.WindowAdapter() {
-            @Override
-            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-                if (JOptionPane.showConfirmDialog(frame, "Are you sure you want to quit?", "Quit?",
-                        JOptionPane.YES_NO_OPTION,
-                        JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION){
-                    SocketManager.writeMsg("Exit");
-                    SocketManager.close();
-                    System.exit(0);
-                }
-            }
-        });
+        Thread messageReceiver = new Thread(new MessageReceiver());
+        runMessageReceiver = true;
+        messageReceiver.start();
 
         sendButton.addActionListener(e -> sendMessage());
     }
 
     public void openFrame() {
         frame = new JFrame("YurChat");
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         frame.setVisible(true);
         frame.setContentPane(mainPanel);
 
         Toolkit toolkit = Toolkit.getDefaultToolkit();
         frame.setBounds(toolkit.getScreenSize().width / 2 - 325, toolkit.getScreenSize().height / 2 - 200, 550, 300);
+
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                int dialogResult = JOptionPane.showConfirmDialog(frame, "Are you sure you want to quit?", "Quit?",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.QUESTION_MESSAGE);
+                if ( dialogResult== JOptionPane.YES_OPTION) {
+                    runMessageReceiver = false;
+                    SocketManager.writeMsg("Exit");
+                    SocketManager.close();
+                    System.exit(0);
+                }
+            }
+        });
     }
 
     private void sendMessage() {
         SocketManager.writeMsg("SendMsg");
         String message = login + ":\t" + messageTextField.getText();
-        SocketManager.writeMsg(message);//exception
+        SocketManager.writeMsg(message);
         messageTextField.setText("");
+        chatTextArea.append(message + "\n");
     }
 
-    private class ReceiveMessage implements Runnable {
+    private class MessageReceiver implements Runnable {
         @Override
         public void run() {
-            while(true) {
-                String msg = SocketManager.readMsg();
-                chatTextArea.append(msg);
+            while(runMessageReceiver) {
+                if(SocketManager.isReaderReady()) {
+                    String msg = SocketManager.readMsg();
+                    chatTextArea.append(msg + "\n");
+                }
             }
         }
     }

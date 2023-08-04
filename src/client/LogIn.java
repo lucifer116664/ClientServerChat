@@ -1,12 +1,9 @@
 package client;
 
-import utils.PropertiesUtil;
 import utils.SocketManager;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.*;
-import java.net.Socket;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
