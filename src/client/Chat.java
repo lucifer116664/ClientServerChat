@@ -7,13 +7,13 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 
 public class Chat{
-    private JFrame frame = new JFrame();
-    private JPanel mainPanel, chatPanel, interfacePanel;
+    private JFrame frame;
+    protected JPanel chatMainPanel, chatPanel, interfacePanel;
     private JTextField messageTextField;
     private JButton sendButton;
     private JTextArea chatTextArea;
-    private final String login;
-    private boolean runMessageReceiver;
+    protected final String login;
+    protected boolean runMessageReceiver;
 
     public Chat(String login) {
         this.login = login;
@@ -29,10 +29,10 @@ public class Chat{
         frame = new JFrame("YurChat");
         frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         frame.setVisible(true);
-        frame.setContentPane(mainPanel);
+        frame.setContentPane(chatMainPanel);
 
         Toolkit toolkit = Toolkit.getDefaultToolkit();
-        frame.setBounds(toolkit.getScreenSize().width / 2 - 325, toolkit.getScreenSize().height / 2 - 200, 550, 300);
+        frame.setBounds(toolkit.getScreenSize().width / 2 - 325, toolkit.getScreenSize().height / 2 - 200, 650, 400);
 
         frame.addWindowListener(new WindowAdapter() {
             @Override

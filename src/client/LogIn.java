@@ -28,10 +28,10 @@ public class LogIn {
 
             String answer = SocketManager.readMsg();
             if (answer.equals("AdminSuccess")) {
-                new Chat(login).openFrame();
+                new Admin(login).openFrame();
                 frame.dispose();
             } else if (answer.equals("Success")) {
-                new Chat(login);
+                new Chat(login).openFrame();
                 frame.dispose();
             } else {
                 JOptionPane.showMessageDialog(null, "Wrong login or password!", "No such user!!!", JOptionPane.ERROR_MESSAGE);
@@ -49,7 +49,7 @@ public class LogIn {
         frame.setBounds(toolkit.getScreenSize().width / 2 - 325, toolkit.getScreenSize().height / 2 - 200, 550, 300);
     }
 
-    private static String hashPassword(String password) {
+    public static String hashPassword(String password) {
         try {
             MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
 
